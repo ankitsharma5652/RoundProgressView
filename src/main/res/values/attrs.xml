@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="RoundProgressView">
+        <attr name="rp_progressColor" format="color" />
+        <attr name="rp_backgroundColor" format="color"/>
+        <attr name="rp_radius" format="integer"/>
+        <attr name="rp_progressWidth" format="dimension" />
+    </declare-styleable>
+</resources>

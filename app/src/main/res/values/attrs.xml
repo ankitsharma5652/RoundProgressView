@@ -6,5 +6,8 @@
         <attr name="rp_backgroundColor" format="color"/>
         <attr name="rp_radius" format="integer"/>
         <attr name="rp_progressWidth" format="dimension" />
+        <attr name="rp_progress" format="integer" />
+        <attr name="rp_maxProgress" format="integer" />
+        <attr name="rp_indeterminate" format="boolean" />
     </declare-styleable>
 </resources>

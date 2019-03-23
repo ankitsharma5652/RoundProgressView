@@ -20,6 +20,8 @@ public class RoundProgressView extends View {
     private final float DEFAULT_WIDTH = 10f;
     private RectF path;
     private int progress = 0;
+    private int maxProgress = 100;
+    private boolean mIndeterminate = true;
     private Paint mPaint;
     private float mWidth = DEFAULT_WIDTH;
     private float outerCircleRadius = 200f;
@@ -31,8 +33,8 @@ public class RoundProgressView extends View {
     private int backgroundColor = Color.TRANSPARENT;
 
     @ColorInt
-    private int progressColor ;
-    private float startAngle;
+    private int progressColor;
+    private float startAngle = 270f;
     private float maxAngle = 20f;
 
     public RoundProgressView(Context context) {
@@ -50,12 +52,17 @@ public class RoundProgressView extends View {
     public RoundProgressView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
 
-        TypedArray array = context.obtainStyledAttributes(R.styleable.RoundProgressView);
 
-        progressColor = array.getColor(R.styleable.RoundProgressView_rp_progressColor,Color.parseColor("#039BE5"));
-        backgroundColor = array.getColor(R.styleable.RoundProgressView_rp_progressColor,Color.parseColor("#e3e3e3"));
-        outerCircleRadius = array.getFloat(R.styleable.RoundProgressView_rp_radius,200f);
-        mWidth = array.getDimension(R.styleable.RoundProgressView_rp_progressWidth,DEFAULT_WIDTH);
+        TypedArray array = context.obtainStyledAttributes(attrs,R.styleable.RoundProgressView);
+
+
+        progressColor = array.getColor(R.styleable.RoundProgressView_rp_progressColor, Color.parseColor("#039BE5"));
+        backgroundColor = array.getColor(R.styleable.RoundProgressView_rp_progressColor, Color.parseColor("#e3e3e3"));
+        outerCircleRadius = array.getFloat(R.styleable.RoundProgressView_rp_radius, 200f);
+        mWidth = array.getDimension(R.styleable.RoundProgressView_rp_progressWidth, DEFAULT_WIDTH);
+        mIndeterminate = array.getBoolean(R.styleable.RoundProgressView_rp_indeterminate,true);
+        progress = array.getInt(R.styleable.RoundProgressView_rp_progress,0);
+        maxProgress = array.getInt(R.styleable.RoundProgressView_rp_maxProgress,100);
 
         array.recycle();
 
@@ -68,7 +75,8 @@ public class RoundProgressView extends View {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        animationSet().start();
+
+        checkProgressAnimation();
     }
 
     @Override
@@ -79,8 +87,45 @@ public class RoundProgressView extends View {
     }
 
 
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+    public void setIndeterminsate(boolean indeterminate) {
+
+        if (indeterminate == mIndeterminate) return;
+
+        this.mIndeterminate = indeterminate;
+
+
+        checkProgressAnimation();
+
+        invalidate();
+    }
+
+    private void checkProgressAnimation() {
+
+        if (mIndeterminate) {
+            animationSet().start();
+            startAngle = 20f;
+        } else
+            animationSet().cancel();
+    }
+
+
+    public boolean isIndeterminate() {
+        return mIndeterminate;
+    }
+
+    public void setMaxProgress(int maxProgress) {
+        if (maxProgress == this.maxProgress) return;
+
+        this.maxProgress = maxProgress;
+        invalidate();
+    }
+
+
+    public void setProgress(int progress) {
+        if (this.progress == progress || progress > maxProgress) return;
+
+        this.progress = progress;
+        invalidate();
     }
 
     @Override
@@ -88,15 +133,23 @@ public class RoundProgressView extends View {
 
         mPaint.setColor(backgroundColor);
 
-        path.set(mWidth+getPaddingStart(), mWidth+getPaddingTop(), getWidth() - mWidth - getPaddingRight(), getHeight() - mWidth-getPaddingBottom());
+        path.set(mWidth + getPaddingStart(), mWidth + getPaddingTop(), getWidth() - mWidth - getPaddingRight(), getHeight() - mWidth - getPaddingBottom());
 
 
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeWidth(mWidth);
-        canvas.drawCircle(getWidth() / 2f, getHeight() / 2f, getWidth() / 2f - (mWidth - getPaddingStart()*2), mPaint);
+        canvas.drawCircle(getWidth() / 2f, getHeight() / 2f, getWidth() / 2f - (mWidth - getPaddingStart() * 2), mPaint);
 
 
         mPaint.setColor(progressColor);
+
+        if (!mIndeterminate) {
+            if (progress > 0)
+                maxAngle = (360f * progress) / 100;
+            else
+                maxAngle = 0f;
+
+        }
 
         canvas.drawArc(path, startAngle, maxAngle, false, mPaint);
 
@@ -132,13 +185,13 @@ public class RoundProgressView extends View {
         set = new AnimatorSet();
 
 
-        set.playTogether(rotateAnimation(), setupAnimation());
+        set.playTogether(rotateAnimation(), scaleAnimation());
 
 
         return set;
     }
 
-    private Animator setupAnimation() {
+    private Animator scaleAnimation() {
 
 
         ValueAnimator animator = ValueAnimator.ofFloat(20, 180);
@@ -163,7 +216,10 @@ public class RoundProgressView extends View {
 
     @Override
     protected void onDetachedFromWindow() {
-        animationSet().cancel();
+
+        if (mIndeterminate)
+            animationSet().cancel();
+
         super.onDetachedFromWindow();
 
     }
